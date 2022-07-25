@@ -15,18 +15,18 @@ class TarFile(tarfile.TarFile):
                                       errors=errors, pax_headers=pax_headers, debug=debug, errorlevel=errorlevel,
                                       copybufsize=copybufsize)
 
-    def get_progress(self, size):
+    def get_progress(self, size, desc=''):
         if self._progress_callback is not None:
             self._progress_callback.total += size
             return self._progress_callback
 
-        res = tqdm(total=size, unit='B', ascii=True, unit_scale=True)
+        res = tqdm(total=size, unit='B', desc=desc, ascii=True, unit_scale=True)
         self._progress_callback = res
         return res
 
     def addfile(self, tarinfo, fileobj=None):
         if fileobj is not None:
-            fileobj = FileWrapper(fileobj, self.get_progress(tarinfo.size))
+            fileobj = FileWrapper(fileobj, self.get_progress(tarinfo.size, desc=tarinfo.name))
         result = super(TarFile, self).addfile(tarinfo, fileobj)
         return result
 
@@ -34,7 +34,7 @@ class TarFile(tarfile.TarFile):
         original = self.fileobj
         try:
             stats = os.fstat(self.fileobj.fileno())
-            self.fileobj = FileWrapper(self.fileobj, self.get_progress(stats.st_size))
+            self.fileobj = FileWrapper(self.fileobj, self.get_progress(stats.st_size, desc=self.name))
         except Exception as e:
             logging.warning(f"extractall error:{e}")
             self.fileobj = original
@@ -50,7 +50,7 @@ class TarFile(tarfile.TarFile):
     def extractfile(self, member):
         fileobj = super(TarFile, self).extractfile(member)
         if fileobj is not None:
-            fileobj = FileWrapper(fileobj, self.get_progress(member.size))
+            fileobj = FileWrapper(fileobj, self.get_progress(member.size, desc=member.name))
 
         return fileobj
 
