@@ -16,6 +16,7 @@ class TarFile(tarfile.TarFile):
                                       copybufsize=copybufsize)
 
     def get_progress(self, size, desc=''):
+        desc = os.path.basename(desc)
         if self._progress_callback is not None:
             self._progress_callback.total += size
             return self._progress_callback
